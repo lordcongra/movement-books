@@ -1,0 +1,8 @@
+id,Created (UTC),Description,Amount,Fee,Net,Currency,Type,Status
+txn_1Qk001,2026-01-05 14:32:00,Payment from Riley Shea Patient - PT Follow-Up,175.00,5.38,169.62,usd,charge,Available
+txn_1Qk002,2026-01-08 10:15:00,Payment from Patient - PT Initial Evaluation,200.00,6.10,193.90,usd,charge,Available
+txn_1Qk003,2026-01-27 16:45:00,Payment - Short Notice Cancellation Fee,175.00,5.38,169.62,usd,charge,Available
+txn_1Qk004,2026-04-03 11:20:00,Payment - Dry Needling Session,70.00,2.33,67.67,usd,charge,Available
+txn_1Qk005,2026-04-09 09:00:00,Payment from Patient - PT Initial Evaluation,200.00,6.10,193.90,usd,charge,Available
+txn_1Qk006,2026-05-14 15:30:00,Payment from Patient - PT Follow-Up Visit,175.00,5.38,169.62,usd,charge,Available
+txn_1Qk007,2026-06-21 11:00:00,Payment from Patient - PT Follow-Up Visit,175.00,5.38,169.62,usd,charge,Available

@@ -38,7 +38,7 @@ export interface ExpenseRecord {
   amount: number; // Total transaction amount
   isSplit: boolean;
   splits: SplitSegment[]; // Sum of splits strictly equals amount
-  category: ExpenseCategory | 'Personal / Non-Deductible' | 'Mixed / Split';
+  category: ExpenseCategory | 'Personal / Non-Deductible' | 'Mixed / Split' | 'Uncategorized';
   businessAmount: number; // Sum of business splits or total if 100% business
   personalAmount: number; // Sum of personal splits
   paymentMethod?: string;
@@ -46,4 +46,22 @@ export interface ExpenseRecord {
   notes?: string;
   importedAt?: string;
   hash?: string;
+}
+
+export interface BankParseResult {
+  records: ExpenseRecord[];
+  totalParsed: number;
+  totalExpenseAmount: number;
+  depositsSkipped: number;
+  warnings: string[];
+  errors: string[];
+}
+
+export interface StripeParseResult {
+  records: ExpenseRecord[];
+  totalParsed: number;
+  totalFees: number;
+  zeroFeeSkipped: number;
+  warnings: string[];
+  errors: string[];
 }

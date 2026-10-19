@@ -9,6 +9,12 @@ import { roundCurrency, sumAmounts, validateSplitInvariant } from '../utils/curr
 import { generateExpenseFingerprint } from '../utils/fingerprint';
 
 const STORAGE_KEY = 'movement_books_expense_records_v1';
+const SELECTED_YEAR_KEY = 'movement_books_expense_selected_year_v1';
+
+export interface AddExpensesResult {
+  added: number;
+  duplicates: number;
+}
 
 export interface ExpenseState {
   records: ExpenseRecord[];
@@ -16,7 +22,8 @@ export interface ExpenseState {
   selectedCategory: string;
 
   // Actions
-  addExpense: (expense: Omit<ExpenseRecord, 'id' | 'businessAmount' | 'personalAmount'>) => ExpenseRecord;
+  addExpense: (expense: Omit<ExpenseRecord, 'id' | 'businessAmount' | 'personalAmount'> & { id?: string }) => ExpenseRecord;
+  addExpenses: (newExpenses: ExpenseRecord[]) => AddExpensesResult;
   updateExpense: (id: string, updates: Partial<ExpenseRecord>) => void;
   removeExpense: (id: string) => void;
   clearExpenses: () => void;
@@ -24,7 +31,7 @@ export interface ExpenseState {
   setSelectedCategory: (cat: string) => void;
 }
 
-function calculateSplitTotals(
+export function calculateSplitTotals(
   amount: number,
   isSplit: boolean,
   splits: SplitSegment[]
@@ -64,6 +71,19 @@ function loadInitialExpenses(): ExpenseRecord[] {
   }
 }
 
+function loadInitialYear(): number {
+  try {
+    const raw = localStorage.getItem(SELECTED_YEAR_KEY);
+    if (raw) {
+      const parsed = parseInt(raw, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+  } catch {
+    // Fall back to current year
+  }
+  return 2026;
+}
+
 function saveExpenses(records: ExpenseRecord[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
@@ -74,11 +94,11 @@ function saveExpenses(records: ExpenseRecord[]) {
 
 export const useExpenseStore = create<ExpenseState>((set) => ({
   records: loadInitialExpenses(),
-  selectedYear: 2026,
+  selectedYear: loadInitialYear(),
   selectedCategory: 'ALL',
 
   addExpense: (data) => {
-    const id = generateExpenseFingerprint({
+    const id = data.id || generateExpenseFingerprint({
       date: data.date,
       vendor: data.vendor,
       amount: data.amount,
@@ -88,24 +108,79 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
     const { businessAmount, personalAmount } = calculateSplitTotals(
       data.amount,
       data.isSplit,
-      data.splits
+      data.splits || []
     );
 
     const newExpense: ExpenseRecord = {
       ...data,
       id,
+      splits: data.splits || [],
       businessAmount,
       personalAmount,
-      importedAt: new Date().toISOString(),
+      importedAt: data.importedAt || new Date().toISOString(),
     };
 
     set((state) => {
-      const updated = [newExpense, ...state.records.filter((r) => r.id !== id)];
+      const filtered = state.records.filter((r) => r.id !== id);
+      const updated = [newExpense, ...filtered];
+      updated.sort((a, b) => b.date.localeCompare(a.date));
       saveExpenses(updated);
       return { records: updated };
     });
 
     return newExpense;
+  },
+
+  addExpenses: (newExpenses) => {
+    let addedCount = 0;
+    let duplicateCount = 0;
+
+    set((state) => {
+      const existingIds = new Set(state.records.map((r) => r.id));
+      const freshToAdd: ExpenseRecord[] = [];
+
+      for (const exp of newExpenses) {
+        const id = exp.id || generateExpenseFingerprint({
+          date: exp.date,
+          vendor: exp.vendor,
+          amount: exp.amount,
+          description: exp.description,
+        });
+
+        if (existingIds.has(id)) {
+          duplicateCount++;
+        } else {
+          existingIds.add(id);
+          const { businessAmount, personalAmount } = calculateSplitTotals(
+            exp.amount,
+            exp.isSplit,
+            exp.splits || []
+          );
+
+          freshToAdd.push({
+            ...exp,
+            id,
+            splits: exp.splits || [],
+            businessAmount,
+            personalAmount,
+            importedAt: exp.importedAt || new Date().toISOString(),
+          });
+          addedCount++;
+        }
+      }
+
+      if (freshToAdd.length === 0) {
+        return state;
+      }
+
+      const updated = [...freshToAdd, ...state.records];
+      updated.sort((a, b) => b.date.localeCompare(a.date));
+
+      saveExpenses(updated);
+      return { records: updated };
+    });
+
+    return { added: addedCount, duplicates: duplicateCount };
   },
 
   updateExpense: (id, updates) => {
@@ -117,7 +192,7 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
         const { businessAmount, personalAmount } = calculateSplitTotals(
           merged.amount,
           merged.isSplit,
-          merged.splits
+          merged.splits || []
         );
 
         return {
@@ -145,7 +220,14 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
     set({ records: [] });
   },
 
-  setSelectedYear: (year) => set({ selectedYear: year }),
+  setSelectedYear: (year) => {
+    try {
+      localStorage.setItem(SELECTED_YEAR_KEY, String(year));
+    } catch {
+      // Ignore
+    }
+    set({ selectedYear: year });
+  },
 
   setSelectedCategory: (cat) => set({ selectedCategory: cat }),
 }));
