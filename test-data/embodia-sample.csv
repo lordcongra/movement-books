@@ -1,0 +1,7 @@
+﻿Invoice date,Invoice #,Patient,Email,Username,Practitioner,Description,Currency,Subtotal,Taxes,Total,Subtotal paid,Taxes paid,Total paid,Subtotal paid from package,Taxes paid from package,Total paid from package,Paid at,Payment method,Status
+January 5, 2026,,,,,Riley Shea,Physical Therapy Follow-Up - Office Visit,US,175,0,175,175,0,175,0,0,0,January 5, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
+January 8, 2026,,,,,Riley Shea,Physical Therapy Evaluation Office Visit,US,200,0,200,200,0,200,0,0,0,January 8, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
+January 8, 2026,,,,,Riley Shea,Physical Therapy Follow-Up - Office Visit,US,175,0,175,175,0,175,0,0,0,January 8, 2026,Check,Paid in full
+January 27, 2026,,,,,Riley Shea,Short Notice Cancellation,US,175,0,175,175,0,175,0,0,0,January 27, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
+April 3, 2026,,,,,Riley Shea,Dry Needling Only Visit,US,70,0,70,70,0,70,0,0,0,April 3, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
+April 9, 2026,,,,,Riley Shea,Physical Therapy Evaluation Office Visit,US,200,0,200,200,0,200,0,0,0,April 9, 2026,Cash,Paid in full
