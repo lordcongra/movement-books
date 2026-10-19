@@ -1,0 +1,74 @@
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Category Badges */
+.badge-eval {
+  background-color: var(--primary-subtle);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+
+.badge-followup {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.badge-dryneedling {
+  background-color: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.badge-cancellation {
+  background-color: var(--expense-red-bg);
+  color: var(--expense-red);
+  border: 1px solid var(--expense-red-border);
+}
+
+.badge-other {
+  background-color: rgba(100, 116, 139, 0.1);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/* Payment Method Badges */
+.badge-stripe {
+  background-color: rgba(99, 91, 255, 0.1);
+  color: #635bff;
+  border: 1px solid rgba(99, 91, 255, 0.25);
+}
+
+.badge-check {
+  background-color: rgba(14, 165, 233, 0.1);
+  color: #0ea5e9;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+}
+
+.badge-cash {
+  background-color: var(--income-green-bg);
+  color: var(--income-green);
+  border: 1px solid var(--income-green-border);
+}
+
+/* Cash Basis Recognition */
+.badge-cash-basis-yes {
+  background-color: var(--income-green-bg);
+  color: var(--income-green);
+  border: 1px solid var(--income-green-border);
+}
+
+.badge-cash-basis-no {
+  background-color: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
+}
