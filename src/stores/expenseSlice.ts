@@ -4,8 +4,8 @@
  */
 
 import { create } from 'zustand';
-import type { ExpenseRecord, SplitSegment } from '../types/expense';
-import { roundCurrency, sumAmounts, validateSplitInvariant } from '../utils/currencyMath';
+import type { ExpenseRecord } from '../types/expense';
+import { calculateSplitTotals } from '../utils/currencyMath';
 import { generateExpenseFingerprint } from '../utils/fingerprint';
 
 const STORAGE_KEY = 'movement_books_expense_records_v1';
@@ -30,43 +30,9 @@ export interface ExpenseState {
   updateExpense: (id: string, updates: Partial<ExpenseRecord>) => void;
   removeExpense: (id: string) => void;
   clearExpenses: () => void;
+  clearCategoryExpenses: (cat: string) => void;
   setSelectedYear: (year: number) => void;
   setSelectedCategory: (cat: string) => void;
-}
-
-export function calculateSplitTotals(
-  amount: number,
-  isSplit: boolean,
-  splits: SplitSegment[],
-  category?: string
-): { businessAmount: number; personalAmount: number } {
-  const roundedTotal = roundCurrency(amount);
-
-  if (!isSplit || splits.length === 0) {
-    if (category === 'Personal / Non-Deductible') {
-      return {
-        businessAmount: 0,
-        personalAmount: roundedTotal,
-      };
-    }
-    return {
-      businessAmount: roundedTotal,
-      personalAmount: 0,
-    };
-  }
-
-  // Split invariant validation
-  if (isSplit && splits.length > 0 && !validateSplitInvariant(splits, roundedTotal)) {
-    console.warn(`Split invariant mismatch: sum of splits does not equal transaction total ($${roundedTotal})`);
-  }
-
-  const businessSplits = splits.filter((s) => s.type === 'business').map((s) => s.amount);
-  const personalSplits = splits.filter((s) => s.type === 'personal').map((s) => s.amount);
-
-  const businessAmount = sumAmounts(businessSplits);
-  const personalAmount = sumAmounts(personalSplits);
-
-  return { businessAmount, personalAmount };
 }
 
 function loadInitialExpenses(): ExpenseRecord[] {
@@ -402,6 +368,27 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
   clearExpenses: () => {
     saveExpenses([]);
     set({ records: [] });
+  },
+
+  clearCategoryExpenses: (category: string) => {
+    set((state) => {
+      if (category === 'ALL') {
+        saveExpenses([]);
+        return { records: [] };
+      }
+      const updated = state.records.filter((r) => {
+        if (category === 'Uncategorized') return r.category !== 'Uncategorized';
+        if (category === 'Mixed / Split') return !r.isSplit && r.category !== 'Mixed / Split';
+        if (category === 'Personal / Non-Deductible') {
+          return r.category !== 'Personal / Non-Deductible' && r.personalAmount <= 0;
+        }
+        const matchesDirect = r.category === category;
+        const matchesSplit = r.isSplit && r.splits?.some((s) => s.category === category);
+        return !matchesDirect && !matchesSplit;
+      });
+      saveExpenses(updated);
+      return { records: updated };
+    });
   },
 
   setSelectedYear: (year) => {

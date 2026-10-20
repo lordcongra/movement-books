@@ -99,7 +99,7 @@ export const TaxReportTab: React.FC = () => {
       <div className="print-only-statement-header">
         <div className="print-header-top">
           <div>
-            <div className="print-practice-name">Pride In Movement Physical Therapy</div>
+            <div className="print-practice-name">Movement Books</div>
             <div className="print-doc-title">
               IRS Form 1040 Schedule C Annual Financial Statement
             </div>

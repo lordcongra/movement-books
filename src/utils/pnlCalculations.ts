@@ -338,7 +338,7 @@ export function generateScheduleCCsv(
 
   // Header banner
   rows.push(['IRS SCHEDULE C (FORM 1040) — PRACTICE TAX SUMMARY']);
-  rows.push(['Pride In Movement Physical Therapy — Financial & Tax Management']);
+  rows.push(['Movement Books — Financial & Tax Management']);
   rows.push([`Tax Year: ${year}`, `Export Date: ${new Date().toISOString().split('T')[0]}`]);
   rows.push([]);
 

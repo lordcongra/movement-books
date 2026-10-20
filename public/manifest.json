@@ -1,7 +1,7 @@
 {
-  "name": "Pride In Movement Books",
+  "name": "Movement Books",
   "short_name": "Movement Books",
-  "description": "Financial & Tax Management for Pride In Movement Physical Therapy",
+  "description": "Financial & Tax Management App",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

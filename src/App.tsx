@@ -33,7 +33,7 @@ export const App: React.FC = () => {
       <footer className="app-footer">
         <div className="footer-container">
           <div className="footer-left">
-            <span>© {CURRENT_YEAR} Pride In Movement Physical Therapy.</span>
+            <span>© {CURRENT_YEAR} Movement Books.</span>
             <span>All rights reserved.</span>
           </div>
           <div className="footer-right">

@@ -60,6 +60,21 @@ export interface EmbodiaInvoiceRecord {
   status: string;
   isCashBasisRevenue: boolean;
   importedAt: string; // ISO timestamp
+  source?: 'embodia' | 'manual';
+  notes?: string;
+}
+
+export interface ManualIncomeInput {
+  date: string; // ISO YYYY-MM-DD
+  description: string;
+  patient?: string;
+  visitCategory: VisitCategory;
+  paymentMethod: PaymentMethod;
+  amount: number;
+  isPaid?: boolean;
+  invoiceNumber?: string;
+  practitioner?: string;
+  notes?: string;
 }
 
 export interface EmbodiaParseResult {

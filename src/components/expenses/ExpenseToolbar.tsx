@@ -9,6 +9,7 @@ import {
   PlusCircle,
   Building2,
   CreditCard,
+  Trash2,
 } from 'lucide-react';
 import { TAX_CATEGORIES } from '../../utils/taxCategories';
 
@@ -20,6 +21,7 @@ interface ExpenseToolbarProps {
   onOpenManualModal: () => void;
   onImportBankClick: () => void;
   onImportStripeClick: () => void;
+  onClearCategoryClick: () => void;
   recordCount: number;
 }
 
@@ -31,6 +33,7 @@ export const ExpenseToolbar: React.FC<ExpenseToolbarProps> = ({
   onOpenManualModal,
   onImportBankClick,
   onImportStripeClick,
+  onClearCategoryClick,
   recordCount,
 }) => {
   return (
@@ -108,6 +111,18 @@ export const ExpenseToolbar: React.FC<ExpenseToolbarProps> = ({
             <PlusCircle size={15} aria-hidden="true" />
             <span>Add Manual Expense</span>
           </button>
+
+          {recordCount > 0 && (
+            <button
+              type="button"
+              className="clear-records-btn"
+              onClick={onClearCategoryClick}
+              title={selectedCategory === 'ALL' ? 'Clear all expense records' : `Clear all ${selectedCategory} records`}
+            >
+              <Trash2 size={14} aria-hidden="true" />
+              <span>{selectedCategory === 'ALL' ? 'Clear All' : `Clear "${selectedCategory}"`}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
  * Pride In Movement Physical Therapy — Financial & Tax Management
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   Download,
   Upload,
@@ -15,11 +15,15 @@ import {
   ShieldCheck,
   GitMerge,
   RotateCcw,
+  Trash2,
 } from 'lucide-react';
 import { useIncomeStore } from '../../stores/incomeSlice';
 import { useExpenseStore } from '../../stores/expenseSlice';
 import type { EmbodiaInvoiceRecord } from '../../types/income';
 import type { ExpenseRecord } from '../../types/expense';
+import { sumAmounts } from '../../utils/currencyMath';
+import { TAX_CATEGORIES } from '../../utils/taxCategories';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 import './BackupModal.css';
 
 interface BackupModalProps {
@@ -42,18 +46,72 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
     null
   );
   const [restoreMode, setRestoreMode] = useState<'merge' | 'replace'>('merge');
+  const [purgeTarget, setPurgeTarget] = useState<string>('INCOME_ALL');
+  const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const incomeRecords = useIncomeStore((state) => state.records);
   const selectedYear = useIncomeStore((state) => state.selectedYear);
   const mergeIncome = useIncomeStore((state) => state.mergeRecords);
   const restoreIncome = useIncomeStore((state) => state.restoreRecords);
+  const clearCategoryIncome = useIncomeStore((state) => state.clearCategoryRecords);
   const setSelectedYearIncome = useIncomeStore((state) => state.setSelectedYear);
 
   const expenseRecords = useExpenseStore((state) => state.records);
   const mergeExpenses = useExpenseStore((state) => state.mergeExpenses);
   const restoreExpenses = useExpenseStore((state) => state.restoreExpenses);
+  const clearCategoryExpense = useExpenseStore((state) => state.clearCategoryExpenses);
   const setSelectedYearExpenses = useExpenseStore((state) => state.setSelectedYear);
+
+  const purgeInfo = useMemo(() => {
+    if (purgeTarget.startsWith('INCOME_')) {
+      const cat = purgeTarget.replace('INCOME_', '');
+      const recs =
+        cat === 'ALL'
+          ? incomeRecords
+          : incomeRecords.filter((r) => r.visitCategory === cat);
+      return {
+        name: cat === 'ALL' ? 'All Income Records' : `${cat} Income`,
+        count: recs.length,
+        total: sumAmounts(recs.map((r) => r.totalPaid)),
+        type: 'income' as const,
+        execute: () => clearCategoryIncome(cat as any),
+      };
+    } else {
+      const cat = purgeTarget.replace('EXPENSE_', '');
+      const recs =
+        cat === 'ALL'
+          ? expenseRecords
+          : expenseRecords.filter((r) => {
+              if (cat === 'Uncategorized') return r.category === 'Uncategorized';
+              if (cat === 'Mixed / Split') return r.isSplit || r.category === 'Mixed / Split';
+              if (cat === 'Personal / Non-Deductible') {
+                return r.category === 'Personal / Non-Deductible' || r.personalAmount > 0;
+              }
+              return (
+                r.category === cat ||
+                (r.isSplit && r.splits?.some((s) => s.category === cat))
+              );
+            });
+      return {
+        name: cat === 'ALL' ? 'All Expense Records' : `${cat} Expenses`,
+        count: recs.length,
+        total: sumAmounts(recs.map((r) => r.amount)),
+        type: 'expense' as const,
+        execute: () => clearCategoryExpense(cat),
+      };
+    }
+  }, [purgeTarget, incomeRecords, expenseRecords, clearCategoryIncome, clearCategoryExpense]);
+
+  const handleConfirmPurge = () => {
+    const deletedCount = purgeInfo.count;
+    const deletedName = purgeInfo.name;
+    purgeInfo.execute();
+    setFeedback({
+      type: 'success',
+      message: `Successfully deleted ${deletedCount} records from ${deletedName}.`,
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -66,7 +124,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
       const payload: BackupPayload = {
         version: '1.0',
         app: 'Movement Books',
-        practice: 'Pride In Movement Physical Therapy',
+        practice: 'Movement Books',
         exportedAt: now.toISOString(),
         activeYear: selectedYear,
         incomeRecords,
@@ -298,6 +356,87 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
             </div>
           </div>
 
+          {/* 3. Category Data Purge Card with Double-Confirm */}
+          <div
+            className="backup-card"
+            style={{
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              backgroundColor: 'rgba(239, 68, 68, 0.03)',
+            }}
+          >
+            <div
+              className="backup-card-icon"
+              style={{ backgroundColor: 'rgba(239, 68, 68, 0.12)', color: 'var(--expense-red)' }}
+            >
+              <Trash2 size={20} aria-hidden="true" />
+            </div>
+            <h4 className="backup-card-title">Delete Data by Category</h4>
+            <p className="backup-card-desc">
+              Permanently purge all records in a selected income or expense category with double-confirmation safeguards.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <label htmlFor="purge_cat_select" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Select Category to Purge:
+              </label>
+              <select
+                id="purge_cat_select"
+                className="modal-select"
+                value={purgeTarget}
+                onChange={(e) => setPurgeTarget(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.55rem',
+                  backgroundColor: 'var(--card-alt)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <optgroup label="Income Categories">
+                  <option value="INCOME_ALL">All Income Records ({incomeRecords.length})</option>
+                  <option value="INCOME_Evaluation">Evaluation</option>
+                  <option value="INCOME_Follow-Up">Follow-Up</option>
+                  <option value="INCOME_Dry Needling">Dry Needling</option>
+                  <option value="INCOME_Cancellation">Cancellation</option>
+                  <option value="INCOME_Other">Other / Workshops / Consulting</option>
+                </optgroup>
+                <optgroup label="Expense Categories">
+                  <option value="EXPENSE_ALL">All Expense Records ({expenseRecords.length})</option>
+                  <option value="EXPENSE_Uncategorized">⚠️ Uncategorized</option>
+                  <option value="EXPENSE_Mixed / Split">✂️ Mixed / Split</option>
+                  {TAX_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={`EXPENSE_${cat.id}`}>
+                      {cat.name}
+                    </option>
+                  ))}
+                  <option value="EXPENSE_Personal / Non-Deductible">Personal / Non-Deductible</option>
+                </optgroup>
+              </select>
+
+              <button
+                type="button"
+                className="btn-backup-action"
+                disabled={purgeInfo.count === 0}
+                onClick={() => setIsPurgeModalOpen(true)}
+                style={{
+                  backgroundColor: purgeInfo.count === 0 ? 'rgba(239, 68, 68, 0.15)' : 'var(--expense-red)',
+                  color: purgeInfo.count === 0 ? 'var(--text-muted)' : '#ffffff',
+                  cursor: purgeInfo.count === 0 ? 'not-allowed' : 'pointer',
+                  marginTop: '0.25rem',
+                }}
+              >
+                <Trash2 size={15} aria-hidden="true" />
+                <span>
+                  {purgeInfo.count === 0
+                    ? 'No Records in Selected Category'
+                    : `Delete ${purgeInfo.count} Records in ${purgeInfo.name}...`}
+                </span>
+              </button>
+            </div>
+          </div>
+
           <div className="backup-guarantee-note">
             <ShieldCheck size={16} className="text-emerald" aria-hidden="true" />
             <span>
@@ -313,6 +452,17 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
           </button>
         </div>
       </div>
+
+      {/* Double-Confirmation Modal for Category Purge */}
+      <DeleteConfirmModal
+        isOpen={isPurgeModalOpen}
+        onClose={() => setIsPurgeModalOpen(false)}
+        onConfirm={handleConfirmPurge}
+        categoryName={purgeInfo.name}
+        count={purgeInfo.count}
+        totalAmount={purgeInfo.total}
+        itemType={purgeInfo.type}
+      />
     </div>
   );
 };

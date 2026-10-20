@@ -32,10 +32,34 @@ export const IncomeRow: React.FC<IncomeRowProps> = ({ record, onDelete }) => {
 
       <td className="cell-description">
         <div className="desc-text" title={record.description}>
-          {record.description || 'Physical Therapy Session'}
+          <span>{record.description || 'Physical Therapy Session'}</span>
+          {(record.source === 'manual' || record.invoiceNumber?.startsWith('MAN-')) && (
+            <span
+              style={{
+                fontSize: '0.68rem',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                color: 'var(--text-accent)',
+                marginLeft: '6px',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Manual
+            </span>
+          )}
         </div>
-        {record.practitioner && (
+        {record.patient && record.patient !== 'Direct Client' && (
+          <div className="practitioner-text">Client: {record.patient}</div>
+        )}
+        {record.practitioner && record.practitioner !== 'Self' && (
           <div className="practitioner-text">Practitioner: {record.practitioner}</div>
+        )}
+        {record.notes && (
+          <div className="practitioner-text" style={{ fontStyle: 'italic', opacity: 0.85 }}>
+            Note: {record.notes}
+          </div>
         )}
       </td>
 

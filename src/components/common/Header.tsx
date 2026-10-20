@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
               <Activity size={22} />
             </div>
             <div className="brand-titles">
-              <span className="brand-name">Pride In Movement PT</span>
+              <span className="brand-name">Movement Books</span>
               <span className="brand-subtitle">Financial & Tax Management</span>
             </div>
           </div>
@@ -71,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onSelectTab }) => {
               role="tab"
             >
               <FileSpreadsheet size={16} aria-hidden="true" />
-              <span>Income (Embodia)</span>
+              <span>Income</span>
             </button>
 
             <button

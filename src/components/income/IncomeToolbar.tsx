@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Search, Filter, Trash2 } from 'lucide-react';
+import { Search, Filter, Trash2, PlusCircle } from 'lucide-react';
 import type { PaymentMethod, VisitCategory } from '../../types/income';
 import { useIncomeStore } from '../../stores/incomeSlice';
 
@@ -11,24 +11,21 @@ interface IncomeToolbarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   recordCount: number;
+  onOpenManualModal: () => void;
+  onClearCategoryClick: () => void;
 }
 
 export const IncomeToolbar: React.FC<IncomeToolbarProps> = ({
   searchQuery,
   onSearchChange,
   recordCount,
+  onOpenManualModal,
+  onClearCategoryClick,
 }) => {
   const selectedCategory = useIncomeStore((state) => state.selectedCategory);
   const setSelectedCategory = useIncomeStore((state) => state.setSelectedCategory);
   const selectedPaymentMethod = useIncomeStore((state) => state.selectedPaymentMethod);
   const setSelectedPaymentMethod = useIncomeStore((state) => state.setSelectedPaymentMethod);
-  const clearRecords = useIncomeStore((state) => state.clearRecords);
-
-  const handleClear = () => {
-    if (window.confirm('Are you sure you want to clear all imported income records? This cannot be undone.')) {
-      clearRecords();
-    }
-  };
 
   return (
     <div className="income-toolbar">
@@ -85,15 +82,38 @@ export const IncomeToolbar: React.FC<IncomeToolbarProps> = ({
           Showing <strong>{recordCount}</strong> records
         </span>
 
+        <button
+          type="button"
+          className="primary-action-btn"
+          onClick={onOpenManualModal}
+          title="Log non-Embodia income (cash, check, direct payment, workshop)"
+          style={{
+            backgroundColor: 'var(--income-green)',
+            color: '#fff',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '0.45rem 0.85rem',
+            borderRadius: 'var(--radius-md)',
+            border: 'none',
+            fontWeight: 600,
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+          }}
+        >
+          <PlusCircle size={15} aria-hidden="true" />
+          <span>Log Non-Embodia Income</span>
+        </button>
+
         {recordCount > 0 && (
           <button
             type="button"
             className="clear-records-btn"
-            onClick={handleClear}
-            title="Clear all imported records"
+            onClick={onClearCategoryClick}
+            title={selectedCategory === 'ALL' ? 'Clear all income records' : `Clear all ${selectedCategory} records`}
           >
             <Trash2 size={14} aria-hidden="true" />
-            <span>Clear All</span>
+            <span>{selectedCategory === 'ALL' ? 'Clear All' : `Clear "${selectedCategory}"`}</span>
           </button>
         )}
       </div>

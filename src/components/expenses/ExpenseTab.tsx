@@ -13,6 +13,8 @@ import { ExpenseToolbar } from './ExpenseToolbar';
 import { ExpenseTable } from './ExpenseTable';
 import { SplitExpenseModal } from './SplitExpenseModal';
 import { ManualExpenseModal } from './ManualExpenseModal';
+import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
+import { sumAmounts } from '../../utils/currencyMath';
 import './ExpenseTab.css';
 
 export const ExpenseTab: React.FC = () => {
@@ -22,6 +24,7 @@ export const ExpenseTab: React.FC = () => {
   const addExpense = useExpenseStore((state) => state.addExpense);
   const updateExpense = useExpenseStore((state) => state.updateExpense);
   const removeExpense = useExpenseStore((state) => state.removeExpense);
+  const clearCategoryExpenses = useExpenseStore((state) => state.clearCategoryExpenses);
   const setSelectedCategory = useExpenseStore((state) => state.setSelectedCategory);
 
   const dropzoneRef = useRef<ExpenseDropzoneHandle>(null);
@@ -31,6 +34,7 @@ export const ExpenseTab: React.FC = () => {
   const [splitModalRecord, setSplitModalRecord] = useState<ExpenseRecord | null>(null);
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Filter records based on active year, category, and search query
   const filteredRecords = useMemo(() => {
@@ -81,6 +85,28 @@ export const ExpenseTab: React.FC = () => {
     updateExpense(id, updates);
   };
 
+  // Determine records targeted for deletion by the selected category
+  const recordsToDelete = useMemo(() => {
+    if (selectedCategory === 'ALL') {
+      return records;
+    }
+    return records.filter((r) => {
+      if (selectedCategory === 'Uncategorized') return r.category === 'Uncategorized';
+      if (selectedCategory === 'Mixed / Split') return r.isSplit || r.category === 'Mixed / Split';
+      if (selectedCategory === 'Personal / Non-Deductible') {
+        return r.category === 'Personal / Non-Deductible' || r.personalAmount > 0;
+      }
+      return (
+        r.category === selectedCategory ||
+        (r.isSplit && r.splits?.some((s) => s.category === selectedCategory))
+      );
+    });
+  }, [records, selectedCategory]);
+
+  const recordsToDeleteAmount = useMemo(() => {
+    return sumAmounts(recordsToDelete.map((r) => r.amount));
+  }, [recordsToDelete]);
+
   return (
     <div className="expense-tab-container">
       {/* 1. Informational Banner */}
@@ -114,6 +140,7 @@ export const ExpenseTab: React.FC = () => {
         onOpenManualModal={() => setIsManualModalOpen(true)}
         onImportBankClick={() => dropzoneRef.current?.triggerBankUpload()}
         onImportStripeClick={() => dropzoneRef.current?.triggerStripeUpload()}
+        onClearCategoryClick={() => setIsDeleteModalOpen(true)}
         recordCount={filteredRecords.length}
       />
 
@@ -142,6 +169,17 @@ export const ExpenseTab: React.FC = () => {
         isOpen={isManualModalOpen}
         onClose={() => setIsManualModalOpen(false)}
         onAdd={addExpense}
+      />
+
+      {/* 7. Double-Confirmation Deletion Modal */}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => clearCategoryExpenses(selectedCategory)}
+        categoryName={selectedCategory === 'ALL' ? 'All Expense Records' : `${selectedCategory} Expenses`}
+        count={recordsToDelete.length}
+        totalAmount={recordsToDeleteAmount}
+        itemType="expense"
       />
     </div>
   );

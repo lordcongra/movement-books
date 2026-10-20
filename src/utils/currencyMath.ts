@@ -3,6 +3,8 @@
  * Ensures financial arithmetic avoids JavaScript floating-point errors.
  */
 
+import type { SplitSegment } from '../types/expense';
+
 /**
  * Rounds a dollar number to 2 decimal places safely via integer cents.
  */
@@ -56,6 +58,41 @@ export function calculateSplitRemainder(
   const totalCents = toCents(total);
   const splitsCents = splits.reduce((acc, curr) => acc + toCents(curr.amount), 0);
   return fromCents(totalCents - splitsCents);
+}
+
+export function calculateSplitTotals(
+  amount: number,
+  isSplit: boolean,
+  splits: SplitSegment[],
+  category?: string
+): { businessAmount: number; personalAmount: number } {
+  const roundedTotal = roundCurrency(amount);
+
+  if (!isSplit || splits.length === 0) {
+    if (category === 'Personal / Non-Deductible') {
+      return {
+        businessAmount: 0,
+        personalAmount: roundedTotal,
+      };
+    }
+    return {
+      businessAmount: roundedTotal,
+      personalAmount: 0,
+    };
+  }
+
+  // Split invariant validation
+  if (isSplit && splits.length > 0 && !validateSplitInvariant(splits, roundedTotal)) {
+    console.warn(`Split invariant mismatch: sum of splits does not equal transaction total ($${roundedTotal})`);
+  }
+
+  const businessSplits = splits.filter((s) => s.type === 'business').map((s) => s.amount);
+  const personalSplits = splits.filter((s) => s.type === 'personal').map((s) => s.amount);
+
+  const businessAmount = sumAmounts(businessSplits);
+  const personalAmount = sumAmounts(personalSplits);
+
+  return { businessAmount, personalAmount };
 }
 
 /**

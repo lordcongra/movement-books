@@ -4,8 +4,9 @@
  */
 
 import { create } from 'zustand';
-import type { EmbodiaInvoiceRecord, PaymentMethod, VisitCategory } from '../types/income';
+import type { EmbodiaInvoiceRecord, ManualIncomeInput, PaymentMethod, VisitCategory } from '../types/income';
 import { generateEmbodiaFingerprint } from '../utils/fingerprint';
+import { roundCurrency } from '../utils/currencyMath';
 
 const STORAGE_KEY = 'movement_books_income_records_v1';
 const SELECTED_YEAR_KEY = 'movement_books_selected_year_v1';
@@ -23,10 +24,12 @@ export interface IncomeState {
 
   // Actions
   addRecords: (newRecords: EmbodiaInvoiceRecord[]) => AddRecordsResult;
+  addManualIncome: (income: ManualIncomeInput) => EmbodiaInvoiceRecord;
   mergeRecords: (records: EmbodiaInvoiceRecord[]) => AddRecordsResult;
   restoreRecords: (records: EmbodiaInvoiceRecord[]) => void;
   removeRecord: (id: string) => void;
   clearRecords: () => void;
+  clearCategoryRecords: (cat: VisitCategory | 'ALL') => void;
   setSelectedYear: (year: number) => void;
   setSelectedCategory: (cat: VisitCategory | 'ALL') => void;
   setSelectedPaymentMethod: (pm: PaymentMethod | 'ALL') => void;
@@ -187,6 +190,52 @@ export const useIncomeStore = create<IncomeState>((set) => ({
     set({ records: valid });
   },
 
+  addManualIncome: (income) => {
+    const roundedAmount = roundCurrency(income.amount);
+    const isPaid = income.isPaid !== false;
+    const id = `inc_man_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const newRecord: EmbodiaInvoiceRecord = {
+      id,
+      invoiceDate: income.date,
+      rawInvoiceDate: income.date,
+      invoiceNumber: income.invoiceNumber?.trim() || `MAN-${Date.now().toString().slice(-6)}`,
+      patient: income.patient?.trim() || 'Direct Client',
+      email: '',
+      practitioner: income.practitioner?.trim() || 'Self',
+      description: income.description.trim() || 'Non-Embodia Income',
+      visitCategory: income.visitCategory,
+      currency: 'USD',
+      subtotal: roundedAmount,
+      taxes: 0,
+      total: roundedAmount,
+      subtotalPaid: isPaid ? roundedAmount : 0,
+      taxesPaid: 0,
+      totalPaid: isPaid ? roundedAmount : 0,
+      paidAt: isPaid ? income.date : '',
+      rawPaidAt: isPaid ? income.date : '',
+      paymentMethod: income.paymentMethod,
+      rawPaymentMethod: income.paymentMethod,
+      status: isPaid ? 'Paid in full' : 'Unpaid',
+      isCashBasisRevenue: isPaid && roundedAmount > 0,
+      importedAt: new Date().toISOString(),
+      source: 'manual',
+      notes: income.notes?.trim() || undefined,
+    };
+
+    set((state) => {
+      const updated = [newRecord, ...state.records];
+      updated.sort((a, b) => {
+        const dateA = a.paidAt || a.invoiceDate;
+        const dateB = b.paidAt || b.invoiceDate;
+        return (dateB || '').localeCompare(dateA || '');
+      });
+      saveRecords(updated);
+      return { records: updated };
+    });
+
+    return newRecord;
+  },
+
   removeRecord: (id) => {
     set((state) => {
       const updated = state.records.filter((r) => r.id !== id);
@@ -198,6 +247,17 @@ export const useIncomeStore = create<IncomeState>((set) => ({
   clearRecords: () => {
     saveRecords([]);
     set({ records: [] });
+  },
+
+  clearCategoryRecords: (category) => {
+    set((state) => {
+      const updated =
+        category === 'ALL'
+          ? []
+          : state.records.filter((r) => r.visitCategory !== category);
+      saveRecords(updated);
+      return { records: updated };
+    });
   },
 
   setSelectedYear: (year) => {
