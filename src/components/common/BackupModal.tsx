@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   FileJson,
   ShieldCheck,
+  GitMerge,
+  RotateCcw,
 } from 'lucide-react';
 import { useIncomeStore } from '../../stores/incomeSlice';
 import { useExpenseStore } from '../../stores/expenseSlice';
@@ -39,14 +41,17 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(
     null
   );
+  const [restoreMode, setRestoreMode] = useState<'merge' | 'replace'>('merge');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const incomeRecords = useIncomeStore((state) => state.records);
   const selectedYear = useIncomeStore((state) => state.selectedYear);
+  const mergeIncome = useIncomeStore((state) => state.mergeRecords);
   const restoreIncome = useIncomeStore((state) => state.restoreRecords);
   const setSelectedYearIncome = useIncomeStore((state) => state.setSelectedYear);
 
   const expenseRecords = useExpenseStore((state) => state.records);
+  const mergeExpenses = useExpenseStore((state) => state.mergeExpenses);
   const restoreExpenses = useExpenseStore((state) => state.restoreExpenses);
   const setSelectedYearExpenses = useExpenseStore((state) => state.setSelectedYear);
 
@@ -113,19 +118,39 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
           throw new Error('Backup file contains no income or expense records.');
         }
 
-        // Restore into stores
-        restoreIncome(restoredIncome);
-        restoreExpenses(restoredExpenses);
+        if (restoreMode === 'merge') {
+          const incRes = mergeIncome(restoredIncome);
+          const expRes = mergeExpenses(restoredExpenses);
 
-        if (parsed.activeYear && typeof parsed.activeYear === 'number') {
-          setSelectedYearIncome(parsed.activeYear);
-          setSelectedYearExpenses(parsed.activeYear);
+          const incDupeText =
+            incRes.duplicates > 0
+              ? ` (${incRes.duplicates} duplicate${incRes.duplicates === 1 ? '' : 's'} skipped)`
+              : '';
+          const expDupeText =
+            expRes.duplicates > 0
+              ? ` (${expRes.duplicates} duplicate${expRes.duplicates === 1 ? '' : 's'} skipped)`
+              : '';
+          const expUpdatedText = expRes.updated > 0 ? `, ${expRes.updated} updated` : '';
+
+          setFeedback({
+            type: 'success',
+            message: `Merge complete! Added ${incRes.added} income${incDupeText} and ${expRes.added} expense items${expDupeText}${expUpdatedText}.`,
+          });
+        } else {
+          // Replace All mode
+          restoreIncome(restoredIncome);
+          restoreExpenses(restoredExpenses);
+
+          if (parsed.activeYear && typeof parsed.activeYear === 'number') {
+            setSelectedYearIncome(parsed.activeYear);
+            setSelectedYearExpenses(parsed.activeYear);
+          }
+
+          setFeedback({
+            type: 'success',
+            message: `Successfully replaced all data with ${restoredIncome.length} income records and ${restoredExpenses.length} expense items!`,
+          });
         }
-
-        setFeedback({
-          type: 'success',
-          message: `Successfully restored ${restoredIncome.length} income records and ${restoredExpenses.length} expense items!`,
-        });
 
         // Reset file input
         if (fileInputRef.current) {
@@ -218,9 +243,39 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
                 <Upload size={22} aria-hidden="true" />
               </div>
               <h4 className="backup-card-title">Restore Backup (JSON)</h4>
+
+              {/* Mode Selection */}
+              <div className="restore-mode-selector">
+                <span className="restore-mode-label">Restore Mode</span>
+                <div className="restore-mode-options" role="radiogroup" aria-label="Restore Mode">
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={restoreMode === 'merge'}
+                    className={`btn-restore-mode ${restoreMode === 'merge' ? 'active' : ''}`}
+                    onClick={() => setRestoreMode('merge')}
+                  >
+                    <GitMerge size={13} aria-hidden="true" />
+                    <span>Merge</span>
+                    <span className="restore-mode-badge">Sync</span>
+                  </button>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={restoreMode === 'replace'}
+                    className={`btn-restore-mode ${restoreMode === 'replace' ? 'active' : ''}`}
+                    onClick={() => setRestoreMode('replace')}
+                  >
+                    <RotateCcw size={13} aria-hidden="true" />
+                    <span>Replace All</span>
+                  </button>
+                </div>
+              </div>
+
               <p className="backup-card-desc">
-                Upload a previously saved Movement Books JSON backup to restore all financial records
-                into your browser.
+                {restoreMode === 'merge'
+                  ? 'Merges backup data with current records. Automatically skips duplicates using deterministic hashes so you can safely sync between phone and desktop.'
+                  : 'Completely replaces all current local income and expense records with the records in the backup file.'}
               </p>
               <input
                 ref={fileInputRef}
@@ -236,7 +291,9 @@ export const BackupModal: React.FC<BackupModalProps> = ({ isOpen, onClose }) => 
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload size={16} aria-hidden="true" />
-                <span>Select Backup File...</span>
+                <span>
+                  {restoreMode === 'merge' ? 'Select File to Merge...' : 'Select File to Replace All...'}
+                </span>
               </button>
             </div>
           </div>

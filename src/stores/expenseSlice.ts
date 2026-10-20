@@ -25,6 +25,7 @@ export interface ExpenseState {
   // Actions
   addExpense: (expense: Omit<ExpenseRecord, 'id' | 'businessAmount' | 'personalAmount'> & { id?: string }) => ExpenseRecord;
   addExpenses: (newExpenses: ExpenseRecord[]) => AddExpensesResult;
+  mergeExpenses: (records: ExpenseRecord[]) => AddExpensesResult;
   restoreExpenses: (records: ExpenseRecord[]) => void;
   updateExpense: (id: string, updates: Partial<ExpenseRecord>) => void;
   removeExpense: (id: string) => void;
@@ -212,6 +213,130 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
 
       const updated = [...freshToAdd, ...currentRecords];
       updated.sort((a, b) => b.date.localeCompare(a.date));
+
+      saveExpenses(updated);
+      return { records: updated };
+    });
+
+    return { added: addedCount, duplicates: duplicateCount, updated: updatedCount };
+  },
+
+  mergeExpenses: (incomingExpenses) => {
+    let addedCount = 0;
+    let duplicateCount = 0;
+    let updatedCount = 0;
+
+    set((state) => {
+      const existingMap = new Map(state.records.map((r) => [r.id, r]));
+      const existingFpMap = new Map(
+        state.records.map((r) => [
+          generateExpenseFingerprint({
+            date: r.date,
+            vendor: r.vendor,
+            amount: r.amount,
+            description: r.description,
+          }),
+          r,
+        ])
+      );
+
+      const freshToAdd: ExpenseRecord[] = [];
+      const currentRecords = [...state.records];
+      let recordsModified = false;
+
+      for (const exp of incomingExpenses) {
+        const fp = generateExpenseFingerprint({
+          date: exp.date,
+          vendor: exp.vendor,
+          amount: exp.amount,
+          description: exp.description,
+        });
+        const id = exp.id || fp;
+
+        const existing = existingMap.get(id) || existingFpMap.get(fp);
+
+        if (existing) {
+          let needsUpdate = false;
+          let updatedItem = { ...existing };
+
+          // If incoming has split info and existing does not
+          if (exp.isSplit && exp.splits && exp.splits.length > 0 && !existing.isSplit) {
+            const { businessAmount, personalAmount } = calculateSplitTotals(
+              exp.amount,
+              true,
+              exp.splits,
+              exp.category
+            );
+            updatedItem = {
+              ...updatedItem,
+              isSplit: true,
+              splits: exp.splits,
+              category: exp.category || existing.category,
+              businessAmount,
+              personalAmount,
+            };
+            needsUpdate = true;
+          } else if (
+            exp.category &&
+            exp.category !== existing.category &&
+            existing.category === 'Uncategorized'
+          ) {
+            const { businessAmount, personalAmount } = calculateSplitTotals(
+              existing.amount,
+              existing.isSplit,
+              existing.splits,
+              exp.category
+            );
+            updatedItem = {
+              ...updatedItem,
+              category: exp.category,
+              businessAmount,
+              personalAmount,
+            };
+            needsUpdate = true;
+          }
+
+          if (needsUpdate) {
+            const idx = currentRecords.findIndex((r) => r.id === existing.id);
+            if (idx !== -1) {
+              currentRecords[idx] = updatedItem;
+              existingMap.set(existing.id, updatedItem);
+              recordsModified = true;
+              updatedCount++;
+            }
+          } else {
+            duplicateCount++;
+          }
+        } else {
+          const { businessAmount, personalAmount } = calculateSplitTotals(
+            exp.amount,
+            exp.isSplit,
+            exp.splits || [],
+            exp.category
+          );
+
+          const newRecord: ExpenseRecord = {
+            ...exp,
+            id,
+            splits: exp.splits || [],
+            businessAmount,
+            personalAmount,
+            importedAt: exp.importedAt || new Date().toISOString(),
+          };
+
+          freshToAdd.push(newRecord);
+          existingMap.set(id, newRecord);
+          existingFpMap.set(fp, newRecord);
+          addedCount++;
+        }
+      }
+
+      if (freshToAdd.length === 0 && !recordsModified) {
+        return state;
+      }
+
+      const updated = [...freshToAdd, ...currentRecords];
+      updated.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
       saveExpenses(updated);
       return { records: updated };

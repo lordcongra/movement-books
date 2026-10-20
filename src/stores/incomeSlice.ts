@@ -5,11 +5,12 @@
 
 import { create } from 'zustand';
 import type { EmbodiaInvoiceRecord, PaymentMethod, VisitCategory } from '../types/income';
+import { generateEmbodiaFingerprint } from '../utils/fingerprint';
 
 const STORAGE_KEY = 'movement_books_income_records_v1';
 const SELECTED_YEAR_KEY = 'movement_books_selected_year_v1';
 
-interface AddRecordsResult {
+export interface AddRecordsResult {
   added: number;
   duplicates: number;
 }
@@ -22,6 +23,7 @@ export interface IncomeState {
 
   // Actions
   addRecords: (newRecords: EmbodiaInvoiceRecord[]) => AddRecordsResult;
+  mergeRecords: (records: EmbodiaInvoiceRecord[]) => AddRecordsResult;
   restoreRecords: (records: EmbodiaInvoiceRecord[]) => void;
   removeRecord: (id: string) => void;
   clearRecords: () => void;
@@ -97,6 +99,74 @@ export const useIncomeStore = create<IncomeState>((set) => ({
         const dateA = a.paidAt || a.invoiceDate;
         const dateB = b.paidAt || b.invoiceDate;
         return dateB.localeCompare(dateA);
+      });
+
+      saveRecords(updated);
+      return { records: updated };
+    });
+
+    return { added: addedCount, duplicates: duplicateCount };
+  },
+
+  mergeRecords: (incomingRecords) => {
+    let addedCount = 0;
+    let duplicateCount = 0;
+
+    set((state) => {
+      const existingIds = new Set<string>();
+      const existingFingerprints = new Set<string>();
+
+      for (const r of state.records) {
+        if (r.id) existingIds.add(r.id);
+        const fp = generateEmbodiaFingerprint({
+          invoiceDate: r.invoiceDate,
+          invoiceNumber: r.invoiceNumber,
+          patient: r.patient,
+          description: r.description,
+          totalPaid: r.totalPaid,
+          paidAt: r.paidAt,
+          total: r.total,
+        });
+        existingFingerprints.add(fp);
+      }
+
+      const freshToAdd: EmbodiaInvoiceRecord[] = [];
+
+      for (const record of incomingRecords) {
+        const fp = generateEmbodiaFingerprint({
+          invoiceDate: record.invoiceDate,
+          invoiceNumber: record.invoiceNumber,
+          patient: record.patient,
+          description: record.description,
+          totalPaid: record.totalPaid,
+          paidAt: record.paidAt,
+          total: record.total,
+        });
+
+        const effectiveId = record.id || fp;
+
+        if (existingIds.has(effectiveId) || existingFingerprints.has(fp)) {
+          duplicateCount++;
+        } else {
+          existingIds.add(effectiveId);
+          existingFingerprints.add(fp);
+          freshToAdd.push({
+            ...record,
+            id: effectiveId,
+          });
+          addedCount++;
+        }
+      }
+
+      if (freshToAdd.length === 0) {
+        return state;
+      }
+
+      const updated = [...state.records, ...freshToAdd];
+      updated.sort((a, b) => {
+        const dateA = a.paidAt || a.invoiceDate;
+        const dateB = b.paidAt || b.invoiceDate;
+        return (dateB || '').localeCompare(dateA || '');
       });
 
       saveRecords(updated);

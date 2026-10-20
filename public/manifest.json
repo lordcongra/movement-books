@@ -1,0 +1,19 @@
+{
+  "name": "Pride In Movement Books",
+  "short_name": "Movement Books",
+  "description": "Financial & Tax Management for Pride In Movement Physical Therapy",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
