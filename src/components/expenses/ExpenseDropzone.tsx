@@ -43,6 +43,15 @@ txn_1Qk005,2026-04-09 09:00:00,Payment from Patient - PT Initial Evaluation,200.
 txn_1Qk006,2026-05-14 15:30:00,Payment from Patient - PT Follow-Up Visit,175.00,5.38,169.62,usd,charge,Available
 txn_1Qk007,2026-06-21 11:00:00,Payment from Patient - PT Follow-Up Visit,175.00,5.38,169.62,usd,charge,Available`;
 
+const SAMPLE_EXPENSE_SHEET_CSV = `Name,Cost ($),Category
+01/06/2026 Panera Bread Team Lunch,$45.80,Food
+MedBridge Annual PT CEU Renewal,$375.00,Education
+01/13/2026 Smartpress Rack Cards & Marketing Flyers,$124.50,Marketing
+Cricut Vinyl & EasyPress clinic signage,$89.20,Supplies
+Namecheap PT domain registration,$18.00,Software & Subscriptions
+Tablecloth,$0.00,Supplies
+Make-A-Wish Foundation Charitable Donation,$50.00,Donation`;
+
 interface ImportStatus {
   type: 'success' | 'warning' | 'error';
   message: string;
@@ -61,6 +70,7 @@ export interface ExpenseDropzoneHandle {
 
 export const ExpenseDropzone = forwardRef<ExpenseDropzoneHandle>((_, ref) => {
   const addExpenses = useExpenseStore((state) => state.addExpenses);
+  const selectedYear = useExpenseStore((state) => state.selectedYear);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -108,30 +118,44 @@ export const ExpenseDropzone = forwardRef<ExpenseDropzoneHandle>((_, ref) => {
           });
         }
       } else {
-        // Parse as Bank Statement
-        const bankRes = parseBankCsv(csvText);
+        // Parse as Bank Statement or Google Sheets Expense / Food Log
+        const bankRes = parseBankCsv(csvText, { filename, defaultYear: selectedYear });
 
         if (bankRes.errors.length > 0 && bankRes.records.length === 0) {
           setImportStatus({
             type: 'error',
-            message: `Bank import error: ${bankRes.errors.join(' ')}`,
+            message: `Import error: ${bankRes.errors.join(' ')}`,
           });
           setIsProcessing(false);
           return;
         }
 
-        const { added, duplicates } = addExpenses(bankRes.records);
+        const { added, duplicates, updated } = addExpenses(bankRes.records);
+        const isFood = /food|meal/i.test(filename);
+        const logType = isFood ? 'food & meal log' : 'expense';
 
-        if (added === 0 && duplicates > 0) {
+        if (added === 0 && updated === 0 && duplicates > 0) {
           setImportStatus({
             type: 'warning',
-            message: `All ${duplicates} expense records in "${filename}" were already imported.`,
+            message: `All ${duplicates} ${logType} records in "${filename}" were already imported with their current categories.`,
             details: { added: 0, duplicates, amount: 0, filteredDeposits: bankRes.depositsSkipped },
           });
-        } else {
+        } else if (updated > 0 && added === 0) {
           setImportStatus({
             type: 'success',
-            message: `Imported ${added} business expense record${added === 1 ? '' : 's'} (${formatCurrency(bankRes.totalExpenseAmount)} total). Filtered out ${bankRes.depositsSkipped} deposit/credit row${bankRes.depositsSkipped === 1 ? '' : 's'}.`,
+            message: `Updated ${updated} existing record${updated === 1 ? '' : 's'} in "${filename}" to ${isFood ? 'Meals (Tax Deductible)' : 'their updated category'}.${bankRes.depositsSkipped > 0 ? ` Filtered out ${bankRes.depositsSkipped} deposit row${bankRes.depositsSkipped === 1 ? '' : 's'}.` : ''}`,
+            details: {
+              added: 0,
+              duplicates,
+              amount: bankRes.totalExpenseAmount,
+              filteredDeposits: bankRes.depositsSkipped,
+            },
+          });
+        } else {
+          const updateMsg = updated > 0 ? ` (and updated ${updated} existing records to ${isFood ? 'Meals (Tax Deductible)' : 'new category'})` : '';
+          setImportStatus({
+            type: 'success',
+            message: `Imported ${added} ${logType} record${added === 1 ? '' : 's'}${updateMsg} (${formatCurrency(bankRes.totalExpenseAmount)} total).${bankRes.depositsSkipped > 0 ? ` Filtered out ${bankRes.depositsSkipped} deposit/credit row${bankRes.depositsSkipped === 1 ? '' : 's'}.` : ''}`,
             details: {
               added,
               duplicates,
@@ -237,10 +261,10 @@ export const ExpenseDropzone = forwardRef<ExpenseDropzoneHandle>((_, ref) => {
 
         <div className="dropzone-text-group">
           <p className="dropzone-main-text">
-            <strong>Click to upload</strong> or drag and drop Bank Statement or Stripe CSV
+            <strong>Click to upload</strong> or drag and drop Bank, Stripe, or Google Sheets CSV
           </p>
           <p className="dropzone-sub-text">
-            Auto-detects bank debits vs. Stripe fees. Deposits are filtered automatically. 100% client-side privacy.
+            Auto-detects bank debits, Stripe fees, and Google Sheets expense/food logs. 100% client-side privacy.
           </p>
         </div>
 
@@ -253,7 +277,7 @@ export const ExpenseDropzone = forwardRef<ExpenseDropzoneHandle>((_, ref) => {
             title="Load built-in PT bank statement sample data"
           >
             <Building2 size={14} aria-hidden="true" />
-            <span>Load Sample Bank Data</span>
+            <span>Load Bank Sample</span>
           </button>
 
           <button
@@ -264,7 +288,18 @@ export const ExpenseDropzone = forwardRef<ExpenseDropzoneHandle>((_, ref) => {
             title="Load built-in Stripe merchant fee data"
           >
             <CreditCard size={14} aria-hidden="true" />
-            <span>Load Sample Stripe Fees</span>
+            <span>Load Stripe Fees</span>
+          </button>
+
+          <button
+            type="button"
+            className="sample-data-btn"
+            onClick={() => processCsvText(SAMPLE_EXPENSE_SHEET_CSV, 'Practice Spending Log.csv')}
+            disabled={isProcessing}
+            title="Load built-in Google Sheets Expense Log sample"
+          >
+            <FileSpreadsheet size={14} aria-hidden="true" />
+            <span>Load Sheets Log</span>
           </button>
         </div>
       </div>

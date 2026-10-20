@@ -146,3 +146,63 @@ export function getMonthName(month: number | string): string {
   const idx = typeof month === 'string' ? parseInt(month, 10) - 1 : month - 1;
   return MONTH_NAMES[idx] ?? 'Unknown';
 }
+
+/**
+ * Extracts embedded dates from item name or description text (e.g., "01/06/2026", "01/13/2026").
+ * Supports MM/DD/YYYY, YYYY-MM-DD, Month DD YYYY, MM/DD/YY, and month/day fallbacks.
+ */
+export function extractEmbeddedDate(text: string, defaultYear: number = 2026): string | null {
+  if (!text) return null;
+
+  // 1. Standard ISO date: YYYY-MM-DD or YYYY/MM/DD
+  const isoMatch = text.match(/\b(\d{4})[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+
+  // 2. US date with 4-digit year: MM/DD/YYYY or MM-DD-YYYY or M/D/YYYY
+  const usMatch = text.match(/\b(0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])[-/](\d{4})\b/);
+  if (usMatch) {
+    const [, m, d, y] = usMatch;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+
+  // 3. Month name with day and 4-digit year: "January 6, 2026" or "Jan 6 2026"
+  const monthNameMatch = text.match(
+    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/i
+  );
+  if (monthNameMatch) {
+    const [, monthStr, dayStr, yearStr] = monthNameMatch;
+    const norm = normalizeDate(`${monthStr} ${dayStr}, ${yearStr}`);
+    if (norm) return norm;
+  }
+
+  // 4. US date with 2-digit year: MM/DD/YY or M/D/YY (e.g. 01/06/26)
+  const usShortMatch = text.match(/\b(0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])[-/](\d{2})\b/);
+  if (usShortMatch) {
+    const [, m, d, yy] = usShortMatch;
+    const fullYear = parseInt(yy, 10) > 50 ? `19${yy}` : `20${yy}`;
+    return `${fullYear}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+
+  // 5. Month name with day without year: "Jan 6" or "January 13"
+  const monthNoYearMatch = text.match(
+    /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{1,2})(?:st|nd|rd|th)?\b/i
+  );
+  if (monthNoYearMatch) {
+    const [, monthStr, dayStr] = monthNoYearMatch;
+    const norm = normalizeDate(`${monthStr} ${dayStr}, ${defaultYear}`);
+    if (norm) return norm;
+  }
+
+  // 6. MM/DD without year: "01/06" or "1/13"
+  const mmDdMatch = text.match(/\b(0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b/);
+  if (mmDdMatch) {
+    const [, m, d] = mmDdMatch;
+    return `${defaultYear}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+
+  return null;
+}
+

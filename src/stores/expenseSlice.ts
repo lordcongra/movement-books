@@ -14,6 +14,7 @@ const SELECTED_YEAR_KEY = 'movement_books_expense_selected_year_v1';
 export interface AddExpensesResult {
   added: number;
   duplicates: number;
+  updated: number;
 }
 
 export interface ExpenseState {
@@ -35,11 +36,18 @@ export interface ExpenseState {
 export function calculateSplitTotals(
   amount: number,
   isSplit: boolean,
-  splits: SplitSegment[]
+  splits: SplitSegment[],
+  category?: string
 ): { businessAmount: number; personalAmount: number } {
   const roundedTotal = roundCurrency(amount);
 
   if (!isSplit || splits.length === 0) {
+    if (category === 'Personal / Non-Deductible') {
+      return {
+        businessAmount: 0,
+        personalAmount: roundedTotal,
+      };
+    }
     return {
       businessAmount: roundedTotal,
       personalAmount: 0,
@@ -109,7 +117,8 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
     const { businessAmount, personalAmount } = calculateSplitTotals(
       data.amount,
       data.isSplit,
-      data.splits || []
+      data.splits || [],
+      data.category
     );
 
     const newExpense: ExpenseRecord = {
@@ -135,10 +144,14 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
   addExpenses: (newExpenses) => {
     let addedCount = 0;
     let duplicateCount = 0;
+    let updatedCount = 0;
 
     set((state) => {
-      const existingIds = new Set(state.records.map((r) => r.id));
+      const existingMap = new Map(state.records.map((r) => [r.id, r]));
+      const existingIds = new Set(existingMap.keys());
       const freshToAdd: ExpenseRecord[] = [];
+      const currentRecords = [...state.records];
+      let recordsModified = false;
 
       for (const exp of newExpenses) {
         const id = exp.id || generateExpenseFingerprint({
@@ -149,13 +162,36 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
         });
 
         if (existingIds.has(id)) {
-          duplicateCount++;
+          const existing = existingMap.get(id);
+          // If the record exists, is not a custom split, and has an updated category (e.g. re-imported food costs)
+          if (existing && !existing.isSplit && exp.category && existing.category !== exp.category) {
+            const idx = currentRecords.findIndex((r) => r.id === id);
+            if (idx !== -1) {
+              const { businessAmount, personalAmount } = calculateSplitTotals(
+                exp.amount,
+                false,
+                [],
+                exp.category
+              );
+              currentRecords[idx] = {
+                ...existing,
+                category: exp.category,
+                businessAmount,
+                personalAmount,
+              };
+              recordsModified = true;
+              updatedCount++;
+            }
+          } else {
+            duplicateCount++;
+          }
         } else {
           existingIds.add(id);
           const { businessAmount, personalAmount } = calculateSplitTotals(
             exp.amount,
             exp.isSplit,
-            exp.splits || []
+            exp.splits || [],
+            exp.category
           );
 
           freshToAdd.push({
@@ -170,18 +206,18 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
         }
       }
 
-      if (freshToAdd.length === 0) {
+      if (freshToAdd.length === 0 && !recordsModified) {
         return state;
       }
 
-      const updated = [...freshToAdd, ...state.records];
+      const updated = [...freshToAdd, ...currentRecords];
       updated.sort((a, b) => b.date.localeCompare(a.date));
 
       saveExpenses(updated);
       return { records: updated };
     });
 
-    return { added: addedCount, duplicates: duplicateCount };
+    return { added: addedCount, duplicates: duplicateCount, updated: updatedCount };
   },
 
   restoreExpenses: (records) => {
@@ -191,7 +227,8 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
       const { businessAmount, personalAmount } = calculateSplitTotals(
         exp.amount,
         exp.isSplit,
-        exp.splits || []
+        exp.splits || [],
+        exp.category
       );
       return {
         ...exp,
@@ -213,7 +250,8 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
         const { businessAmount, personalAmount } = calculateSplitTotals(
           merged.amount,
           merged.isSplit,
-          merged.splits || []
+          merged.splits || [],
+          merged.category
         );
 
         return {
