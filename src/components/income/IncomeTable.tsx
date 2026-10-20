@@ -25,7 +25,7 @@ export const IncomeTable: React.FC<IncomeTableProps> = ({
         </div>
         <h3>No income records to display</h3>
         <p>
-          Upload an Embodia billing CSV export or click <strong>Load Sample Data</strong> above to populate records.
+          Upload an Embodia billing CSV export above to populate records.
         </p>
       </div>
     );

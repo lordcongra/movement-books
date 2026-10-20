@@ -5,7 +5,8 @@
 
 /* Hidden on screen by default */
 .print-only-statement-header,
-.print-only-signature-section {
+.print-only-signature-section,
+.print-only-cell {
   display: none;
 }
 
@@ -17,8 +18,13 @@
   .tax-privacy-card,
   .btn-toolbar,
   .schedule-header-badge,
+  .screen-only-cell,
   button {
     display: none !important;
+  }
+
+  .print-only-cell {
+    display: table-cell !important;
   }
 
   /* 2. Reset backgrounds and page layout */
@@ -96,6 +102,11 @@
   }
 
   /* 5. Schedule C Table in Print */
+  .schedule-table-card,
+  .schedule-table-scroll {
+    overflow: visible !important;
+  }
+
   .schedule-table-card {
     background: #ffffff !important;
     border: 1px solid #94a3b8 !important;
@@ -119,6 +130,43 @@
     width: 100% !important;
     border-collapse: collapse !important;
     font-size: 8.5pt !important;
+  }
+
+  /* Hide examples column in print since practice descriptions already render in .cat-desc */
+  .th-examples,
+  .cell-examples {
+    display: none !important;
+  }
+
+  /* Reset min-widths to prevent horizontal clipping in print */
+  .schedule-c-table .th-line,
+  .schedule-c-table .th-cat,
+  .schedule-c-table .th-rate,
+  .schedule-c-table .th-amount {
+    min-width: 0 !important;
+  }
+
+  /* Proportional column print widths (22% + 42% + 10% + 13% + 13% = 100%) */
+  .schedule-c-table .th-line,
+  .schedule-c-table td:first-child {
+    width: 22% !important;
+  }
+
+  .schedule-c-table .th-cat,
+  .schedule-c-table tbody td:nth-child(2) {
+    width: 42% !important;
+  }
+
+  .schedule-c-table .th-rate,
+  .schedule-c-table .cell-rate {
+    width: 10% !important;
+    text-align: center !important;
+  }
+
+  .schedule-c-table .th-amount,
+  .schedule-c-table .cell-amount {
+    width: 13% !important;
+    text-align: right !important;
   }
 
   .schedule-c-table th,
@@ -145,8 +193,23 @@
     font-weight: bold !important;
   }
 
+  .tfoot-total-row td {
+    border-top: 2px solid #0f172a !important;
+    border-bottom: 2px solid #0f172a !important;
+  }
+
+  .tfoot-label {
+    text-align: left !important;
+    font-size: 8.5pt !important;
+    color: #0f172a !important;
+  }
+
   .tfoot-total-amount {
     font-size: 10.5pt !important;
+    font-weight: 800 !important;
+    text-align: right !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
   }
 
   /* 6. Signature Line at document bottom */

@@ -8,8 +8,6 @@ import {
   UploadCloud,
   CheckCircle2,
   AlertTriangle,
-  Building2,
-  CreditCard,
   Loader2,
   FileSpreadsheet,
 } from 'lucide-react';
@@ -18,39 +16,7 @@ import { parseStripeCsv } from '../../utils/stripeParser';
 import { formatCurrency } from '../../utils/currencyMath';
 import { useExpenseStore } from '../../stores/expenseSlice';
 
-const SAMPLE_BANK_CSV = `Posting Date,Description,Amount,Type,Balance
-2026-01-01,Pride In Movement Studio Sublease Rent,-1200.00,Debit,45000.00
-2026-01-05,STRIPE PAYOUT PRIDE IN MOVEMENT,525.00,Credit,45525.00
-2026-01-12,MedBridge Annual PT CEU Subscription,-375.00,Debit,45150.00
-2026-01-15,Verizon Wireless PT Clinic Mobile Phone,-120.00,Debit,45030.00
-2026-01-20,CLIENT CHECK DEPOSIT - J. DOE,200.00,Credit,45230.00
-2026-02-04,Lhasa OMS Dry Needling Needles & Supplies,-94.50,Debit,45135.50
-2026-02-10,Google Workspace Telehealth & Domain,-18.00,Debit,45117.50
-2026-02-15,HPSO Malpractice Liability Insurance Premium,-485.00,Debit,44632.50
-2026-02-28,Commercial Account Monthly Maintenance Fee,-15.00,Debit,44617.50
-2026-03-01,Pride In Movement Studio Sublease Rent,-1200.00,Debit,43417.50
-2026-03-08,PATIENT CASH DEPOSIT,200.00,Credit,43617.50
-2026-03-14,Clinton Industries Hi-Lo PT Treatment Table,-850.00,Debit,42767.50
-2026-03-22,Shell Oil - Patient Home Visit Fuel,-45.00,Debit,42722.50
-2026-03-29,APTA Professional Association Annual Dues,-295.00,Debit,42427.50`;
 
-const SAMPLE_STRIPE_CSV = `id,Created (UTC),Description,Amount,Fee,Net,Currency,Type,Status
-txn_1Qk001,2026-01-05 14:32:00,Payment from Riley Shea Patient - PT Follow-Up,175.00,5.38,169.62,usd,charge,Available
-txn_1Qk002,2026-01-08 10:15:00,Payment from Patient - PT Initial Evaluation,200.00,6.10,193.90,usd,charge,Available
-txn_1Qk003,2026-01-27 16:45:00,Payment - Short Notice Cancellation Fee,175.00,5.38,169.62,usd,charge,Available
-txn_1Qk004,2026-04-03 11:20:00,Payment - Dry Needling Session,70.00,2.33,67.67,usd,charge,Available
-txn_1Qk005,2026-04-09 09:00:00,Payment from Patient - PT Initial Evaluation,200.00,6.10,193.90,usd,charge,Available
-txn_1Qk006,2026-05-14 15:30:00,Payment from Patient - PT Follow-Up Visit,175.00,5.38,169.62,usd,charge,Available
-txn_1Qk007,2026-06-21 11:00:00,Payment from Patient - PT Follow-Up Visit,175.00,5.38,169.62,usd,charge,Available`;
-
-const SAMPLE_EXPENSE_SHEET_CSV = `Name,Cost ($),Category
-01/06/2026 Panera Bread Team Lunch,$45.80,Food
-MedBridge Annual PT CEU Renewal,$375.00,Education
-01/13/2026 Smartpress Rack Cards & Marketing Flyers,$124.50,Marketing
-Cricut Vinyl & EasyPress clinic signage,$89.20,Supplies
-Namecheap PT domain registration,$18.00,Software & Subscriptions
-Tablecloth,$0.00,Supplies
-Make-A-Wish Foundation Charitable Donation,$50.00,Donation`;
 
 interface ImportStatus {
   type: 'success' | 'warning' | 'error';
@@ -88,10 +54,13 @@ export const ExpenseDropzone = forwardRef<ExpenseDropzoneHandle>((_, ref) => {
 
     try {
       const headerLine = (csvText.split('\n')[0] || '').toLowerCase();
-      const isStripe = headerLine.includes('fee') || headerLine.includes('balance transaction');
+      const isItemizedStripe =
+        (headerLine.includes('feature_name') || headerLine.includes('feature name')) &&
+        (headerLine.includes('suite') || headerLine.includes('billing_status') || headerLine.includes('billing status'));
+      const isStripe = headerLine.includes('fee') || headerLine.includes('balance transaction') || isItemizedStripe;
 
       if (isStripe) {
-        const stripeRes = parseStripeCsv(csvText);
+        const stripeRes = parseStripeCsv(csvText, { filename, defaultYear: selectedYear });
 
         if (stripeRes.errors.length > 0 && stripeRes.records.length === 0) {
           setImportStatus({
@@ -268,40 +237,7 @@ export const ExpenseDropzone = forwardRef<ExpenseDropzoneHandle>((_, ref) => {
           </p>
         </div>
 
-        <div className="dropzone-actions" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            className="sample-data-btn"
-            onClick={() => processCsvText(SAMPLE_BANK_CSV, 'bank-sample.csv')}
-            disabled={isProcessing}
-            title="Load built-in PT bank statement sample data"
-          >
-            <Building2 size={14} aria-hidden="true" />
-            <span>Load Bank Sample</span>
-          </button>
 
-          <button
-            type="button"
-            className="sample-data-btn"
-            onClick={() => processCsvText(SAMPLE_STRIPE_CSV, 'stripe-sample.csv')}
-            disabled={isProcessing}
-            title="Load built-in Stripe merchant fee data"
-          >
-            <CreditCard size={14} aria-hidden="true" />
-            <span>Load Stripe Fees</span>
-          </button>
-
-          <button
-            type="button"
-            className="sample-data-btn"
-            onClick={() => processCsvText(SAMPLE_EXPENSE_SHEET_CSV, 'Practice Spending Log.csv')}
-            disabled={isProcessing}
-            title="Load built-in Google Sheets Expense Log sample"
-          >
-            <FileSpreadsheet size={14} aria-hidden="true" />
-            <span>Load Sheets Log</span>
-          </button>
-        </div>
       </div>
 
       {importStatus && (

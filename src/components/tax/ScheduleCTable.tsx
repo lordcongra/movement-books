@@ -85,7 +85,10 @@ export const ScheduleCTable: React.FC<ScheduleCTableProps> = ({
           </tbody>
           <tfoot>
             <tr className="tfoot-total-row">
-              <td colSpan={5} className="tfoot-label">
+              <td colSpan={5} className="tfoot-label screen-only-cell">
+                <strong>Line 28: Total Allowable Practice Expenses ({year})</strong>
+              </td>
+              <td colSpan={4} className="tfoot-label print-only-cell">
                 <strong>Line 28: Total Allowable Practice Expenses ({year})</strong>
               </td>
               <td className="cell-amount tfoot-total-amount">

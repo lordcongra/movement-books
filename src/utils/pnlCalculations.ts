@@ -333,21 +333,24 @@ export function generateScheduleCCsv(
 
   const rows: string[][] = [];
 
+  // Helper to safely double-quote all formatted currency amounts (prevents comma-splitting in Excel/Sheets)
+  const fmt = (val: number): string => `"${formatCurrency(val)}"`;
+
   // Header banner
   rows.push(['IRS SCHEDULE C (FORM 1040) — PRACTICE TAX SUMMARY']);
   rows.push(['Pride In Movement Physical Therapy — Financial & Tax Management']);
   rows.push([`Tax Year: ${year}`, `Export Date: ${new Date().toISOString().split('T')[0]}`]);
   rows.push([]);
 
-  // Part I
+  // Part I — Aligned across 6 columns matching Part II (Col A: Line, Col B: Description, Col F: Amount)
   rows.push(['PART I — GROSS RECEIPTS & REVENUE (CASH BASIS)']);
-  rows.push(['Line Number', 'Description', 'Amount']);
-  rows.push(['Line 1', 'Gross receipts or sales (Cash Basis Collected Revenue)', formatCurrency(grossRevenue)]);
-  rows.push(['Line 3', 'Gross profit', formatCurrency(grossRevenue)]);
-  rows.push(['Line 7', 'Gross income', formatCurrency(grossRevenue)]);
+  rows.push(['Line Number', 'Description', '', '', '', 'Amount']);
+  rows.push(['Line 1', 'Gross receipts or sales (Cash Basis Collected Revenue)', '', '', '', fmt(grossRevenue)]);
+  rows.push(['Line 3', 'Gross profit', '', '', '', fmt(grossRevenue)]);
+  rows.push(['Line 7', 'Gross income', '', '', '', fmt(grossRevenue)]);
   rows.push([]);
 
-  // Part II
+  // Part II — 6 columns
   rows.push(['PART II — EXPENSES & PRACTICE DEDUCTIONS']);
   rows.push(['Line Number', 'Tax Category', 'Typical Practice Description', 'Gross Expense', 'Deductible Rate', 'Allowable Deduction']);
 
@@ -357,30 +360,41 @@ export function generateScheduleCCsv(
       line.line,
       line.category,
       `"${line.description.replace(/"/g, '""')}"`,
-      formatCurrency(line.grossAmount),
+      fmt(line.grossAmount),
       rateLabel,
-      formatCurrency(line.deductibleAmount),
+      fmt(line.deductibleAmount),
     ]);
   }
 
   rows.push([]);
-  rows.push(['Line 28', 'Total expenses (allowable practice deductions)', '', '', '', formatCurrency(totalDeductible)]);
-  rows.push(['Line 31', 'Net profit or (loss) [Line 7 minus Line 28]', '', '', '', formatCurrency(netProfit)]);
+  rows.push(['Line 28', 'Total expenses (allowable practice deductions)', '', '', '', fmt(totalDeductible)]);
+  rows.push(['Line 31', 'Net profit or (loss) [Line 7 minus Line 28]', '', '', '', fmt(netProfit)]);
   rows.push([]);
 
-  // Schedule SE & Estimated Tax Guidance
+  // Schedule SE & Estimated Tax Guidance — Aligned across 6 columns
   rows.push(['SCHEDULE SE — SELF-EMPLOYMENT TAX GUIDANCE (SOLO PRACTITIONER)']);
-  rows.push(['Line 4', 'Net earnings from self-employment (Net profit × 92.35%)', '', '', '', formatCurrency(estTax.seEarnings)]);
-  rows.push(['Line 5', 'Self-employment tax (15.3% = 12.4% OASDI + 2.9% HI)', '', '', '', formatCurrency(estTax.seTaxTotal)]);
-  rows.push(['Line 6', 'Deduction for one-half of self-employment tax (50%)', '', '', '', formatCurrency(roundCurrency(estTax.seTaxTotal / 2))]);
+  rows.push(['Line Number', 'Description', '', '', '', 'Amount']);
+  rows.push(['Line 4', 'Net earnings from self-employment (Net profit × 92.35%)', '', '', '', fmt(estTax.seEarnings)]);
+  rows.push(['Line 5', 'Self-employment tax (15.3% = 12.4% OASDI + 2.9% HI)', '', '', '', fmt(estTax.seTaxTotal)]);
+  rows.push(['Line 6', 'Deduction for one-half of self-employment tax (50%)', '', '', '', fmt(roundCurrency(estTax.seTaxTotal / 2))]);
   rows.push([]);
 
   // Estimated Safe Harbor Quarterly Payments
   rows.push(['IRS ESTIMATED SAFE-HARBOR QUARTERLY TAX PAYMENTS']);
   rows.push(['Quarter', 'Filing Due Date', 'Period Covered', 'Recommended Set-Aside']);
   for (const dl of estTax.deadlines) {
-    rows.push([dl.quarter, dl.dueDate, dl.periodCovered, formatCurrency(dl.amount)]);
+    rows.push([dl.quarter, dl.dueDate, `"${dl.periodCovered}"`, fmt(dl.amount)]);
   }
 
-  return rows.map((r) => r.join(',')).join('\r\n');
+  // Safe CSV escaping helper
+  const escapeCell = (cell: string): string => {
+    if (!cell) return '';
+    if (cell.startsWith('"') && cell.endsWith('"')) return cell;
+    if (cell.includes(',') || cell.includes('"') || cell.includes('\n') || cell.includes('\r')) {
+      return `"${cell.replace(/"/g, '""')}"`;
+    }
+    return cell;
+  };
+
+  return rows.map((r) => r.map(escapeCell).join(',')).join('\r\n');
 }

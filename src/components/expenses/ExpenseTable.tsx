@@ -27,7 +27,7 @@ export const ExpenseTable: React.FC<ExpenseTableProps> = ({
         </div>
         <h3>No expense records found</h3>
         <p>
-          Import a bank statement CSV, load sample data above, or click <strong>Add Manual Expense</strong> to record expenses.
+          Import a bank statement CSV or click <strong>Add Manual Expense</strong> to record expenses.
         </p>
       </div>
     );

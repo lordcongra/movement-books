@@ -240,11 +240,11 @@
 }
 
 .split-modal-card {
-  max-width: 720px;
+  max-width: min(880px, 95vw);
 }
 
 .manual-modal-card {
-  max-width: 580px;
+  max-width: 640px;
 }
 
 .modal-header {
@@ -474,14 +474,19 @@
 
 .segment-fields-grid {
   display: grid;
-  grid-template-columns: 120px 90px 1fr;
-  gap: 0.75rem;
+  grid-template-columns: 130px 100px minmax(0, 1fr);
+  gap: 0.875rem;
 }
 
 .segment-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+}
+
+.segment-field.field-grow {
+  min-width: 0;
 }
 
 .segment-field label {
@@ -498,6 +503,13 @@
   color: var(--text-main);
   font-size: 0.8125rem;
   outline: none;
+}
+
+.modal-select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  text-overflow: ellipsis;
 }
 
 .modal-input:focus, .modal-select:focus {

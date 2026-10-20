@@ -9,20 +9,13 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   AlertTriangle,
-  Sparkles,
   Loader2,
 } from 'lucide-react';
 import { parseEmbodiaCsv } from '../../utils/embodiaParser';
 import { formatCurrency } from '../../utils/currencyMath';
 import { useIncomeStore } from '../../stores/incomeSlice';
 
-const SAMPLE_CSV_CONTENT = `Invoice date,Invoice #,Patient,Email,Username,Practitioner,Description,Currency,Subtotal,Taxes,Total,Subtotal paid,Taxes paid,Total paid,Subtotal paid from package,Taxes paid from package,Total paid from package,Paid at,Payment method,Status
-January 5, 2026,,,,,Riley Shea,Physical Therapy Follow-Up - Office Visit,US,175,0,175,175,0,175,0,0,0,January 5, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
-January 8, 2026,,,,,Riley Shea,Physical Therapy Evaluation Office Visit,US,200,0,200,200,0,200,0,0,0,January 8, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
-January 8, 2026,,,,,Riley Shea,Physical Therapy Follow-Up - Office Visit,US,175,0,175,175,0,175,0,0,0,January 8, 2026,Check,Paid in full
-January 27, 2026,,,,,Riley Shea,Short Notice Cancellation,US,175,0,175,175,0,175,0,0,0,January 27, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
-April 3, 2026,,,,,Riley Shea,Dry Needling Only Visit,US,70,0,70,70,0,70,0,0,0,April 3, 2026,Pride In Movement Physical Therapy Stripe,Paid in full
-April 9, 2026,,,,,Riley Shea,Physical Therapy Evaluation Office Visit,US,200,0,200,200,0,200,0,0,0,April 9, 2026,Cash,Paid in full`;
+
 
 interface ImportStatus {
   type: 'success' | 'warning' | 'error';
@@ -136,9 +129,7 @@ export const EmbodiaDropzone: React.FC = () => {
     reader.readAsText(file);
   };
 
-  const handleLoadSample = () => {
-    processCsvText(SAMPLE_CSV_CONTENT, 'embodia-sample.csv');
-  };
+
 
   return (
     <div className="dropzone-card">
@@ -182,18 +173,7 @@ export const EmbodiaDropzone: React.FC = () => {
           </p>
         </div>
 
-        <div className="dropzone-actions" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            className="sample-data-btn"
-            onClick={handleLoadSample}
-            disabled={isProcessing}
-            title="Load built-in Embodia sample data"
-          >
-            <Sparkles size={14} aria-hidden="true" />
-            <span>Load Sample Data (6 Visits)</span>
-          </button>
-        </div>
+
       </div>
 
       {importStatus && (
