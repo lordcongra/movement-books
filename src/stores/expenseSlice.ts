@@ -24,6 +24,7 @@ export interface ExpenseState {
   // Actions
   addExpense: (expense: Omit<ExpenseRecord, 'id' | 'businessAmount' | 'personalAmount'> & { id?: string }) => ExpenseRecord;
   addExpenses: (newExpenses: ExpenseRecord[]) => AddExpensesResult;
+  restoreExpenses: (records: ExpenseRecord[]) => void;
   updateExpense: (id: string, updates: Partial<ExpenseRecord>) => void;
   removeExpense: (id: string) => void;
   clearExpenses: () => void;
@@ -181,6 +182,26 @@ export const useExpenseStore = create<ExpenseState>((set) => ({
     });
 
     return { added: addedCount, duplicates: duplicateCount };
+  },
+
+  restoreExpenses: (records) => {
+    const valid = Array.isArray(records) ? [...records] : [];
+    // Ensure split totals and formatting are recalculated properly
+    const normalized = valid.map((exp) => {
+      const { businessAmount, personalAmount } = calculateSplitTotals(
+        exp.amount,
+        exp.isSplit,
+        exp.splits || []
+      );
+      return {
+        ...exp,
+        businessAmount,
+        personalAmount,
+      };
+    });
+    normalized.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    saveExpenses(normalized);
+    set({ records: normalized });
   },
 
   updateExpense: (id, updates) => {

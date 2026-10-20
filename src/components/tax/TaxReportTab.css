@@ -4,23 +4,23 @@
   gap: 1.5rem;
 }
 
+/* Privacy Guarantee Banner */
 .tax-privacy-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--income-green-border);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem 1.5rem;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
-  background: linear-gradient(180deg, var(--card-bg) 0%, var(--income-green-bg) 100%);
+  background-color: rgba(99, 102, 241, 0.06);
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  padding: 1.125rem 1.25rem;
 }
 
 .tax-privacy-icon {
   width: 42px;
   height: 42px;
   border-radius: var(--radius-md);
-  background-color: var(--income-green-bg);
-  color: var(--income-green);
+  background-color: var(--primary-subtle);
+  color: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -28,16 +28,216 @@
 }
 
 .tax-privacy-body h3 {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--text-main);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .tax-privacy-body p {
   font-size: 0.8125rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.45;
+}
+
+/* Tax Action Toolbar */
+.tax-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.text-emerald {
+  color: var(--emerald-accent);
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.btn-print {
+  background-color: var(--bg);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+.btn-print:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--border-focus);
+}
+
+.btn-export {
+  background-color: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+}
+
+.btn-export:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Schedule C KPI Metrics Grid */
+.tax-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.tax-metric-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.tax-metric-card.highlight-profit {
+  border-left: 4px solid var(--primary);
+}
+
+.tax-metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tax-metric-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tax-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-green {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: var(--income-green);
+}
+
+.icon-red {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: var(--expense-red);
+}
+
+.icon-indigo {
+  background-color: var(--primary-subtle);
+  color: var(--primary);
+}
+
+.icon-gold {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+}
+
+.tax-metric-value {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.tax-metric-value.text-gold {
+  color: var(--warning);
+}
+
+.tax-metric-footer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Schedule C Table Card */
+.schedule-table-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.schedule-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.125rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-bg);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.schedule-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.table-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.table-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.schedule-header-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--income-green);
+  background-color: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.schedule-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .schedule-c-table {
@@ -47,30 +247,136 @@
   font-size: 0.8125rem;
 }
 
-.schedule-c-table th {
-  padding: 10px 14px;
-  background-color: var(--bg-subtle);
+.schedule-c-table th,
+.schedule-c-table td {
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
 }
 
-.schedule-c-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
+.schedule-c-table thead tr {
+  background-color: var(--bg);
+}
+
+.th-line {
+  min-width: 160px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.th-cat {
+  min-width: 180px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.th-examples {
+  min-width: 220px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.th-rate {
+  text-align: center;
+  width: 80px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.th-amount {
+  text-align: right;
+  min-width: 120px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 
 .schedule-line-badge {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   background-color: var(--bg-subtle);
-  border: 1px solid var(--border);
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
   color: var(--primary);
-  display: inline-block;
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.cat-name {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.cat-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.cell-examples {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.cell-rate {
+  text-align: center;
+}
+
+.rate-pill {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background-color: var(--bg-subtle);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.rate-reduced {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+.cell-amount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.text-spent {
+  color: var(--text-main);
+}
+
+.text-deductible {
+  color: var(--income-green);
+  font-weight: 700;
+}
+
+.text-zero {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.row-active-expense {
+  background-color: rgba(16, 185, 129, 0.02);
+}
+
+.tfoot-total-row {
+  background-color: var(--bg-subtle);
+}
+
+.tfoot-label {
+  color: var(--text-main);
+  font-size: 0.875rem;
+  padding: 1rem !important;
+}
+
+.tfoot-total-amount {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--income-green);
+  padding: 1rem !important;
 }

@@ -29,3 +29,63 @@ export interface PnlYearSummary {
   quarterly: Record<string, PnlPeriodSummary>; // keyed by "Q1", "Q2", "Q3", "Q4"
   ytd: PnlPeriodSummary;
 }
+
+export interface QuarterMetrics {
+  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  label: string; // e.g. "Q1 (Jan - Mar)"
+  months: string; // e.g. "Jan - Mar"
+  grossRevenue: number;
+  businessExpenses: number;
+  netProfit: number;
+  profitMargin: number; // percentage, e.g. 68.4
+  visitCount: number;
+}
+
+export interface QuarterlyPnlResult {
+  year: number;
+  quarters: [QuarterMetrics, QuarterMetrics, QuarterMetrics, QuarterMetrics];
+  ytd: {
+    grossRevenue: number;
+    businessExpenses: number;
+    netProfit: number;
+    profitMargin: number;
+    visitCount: number;
+  };
+}
+
+export interface MonthlyTrendItem {
+  monthIndex: number; // 1 - 12
+  monthKey: string; // "01" - "12"
+  monthName: string; // "Jan", "Feb", ...
+  revenue: number;
+  expenses: number;
+  netProfit: number;
+  marginPercent: number;
+  visitCount: number;
+}
+
+export interface TaxDeadlineItem {
+  quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
+  dueDate: string; // e.g. "April 15, 2026"
+  amount: number;
+  periodCovered: string; // e.g. "Jan 1 – Mar 31"
+  status: 'upcoming' | 'past' | 'current';
+}
+
+export interface EstimatedTaxResult {
+  netProfit: number;
+  seEarnings: number; // Net Profit * 0.9235
+  seTaxRate: number; // 0.153 (15.3%)
+  seTaxTotal: number; // seEarnings * 0.153
+  quarterlyPayment: number; // seTaxTotal / 4
+  deadlines: TaxDeadlineItem[];
+}
+
+export interface ScheduleCExpenseLine {
+  line: string;
+  category: ExpenseCategory;
+  description: string;
+  grossAmount: number;
+  deductibleRate: number;
+  deductibleAmount: number;
+}

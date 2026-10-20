@@ -1,0 +1,193 @@
+.est-tax-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.est-tax-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.125rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--card-bg);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.est-tax-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.est-tax-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.est-tax-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.est-tax-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--income-green);
+  background-color: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.est-tax-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.est-tax-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.est-metric-box {
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.est-box-quarterly {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: linear-gradient(180deg, var(--bg) 0%, rgba(99, 102, 241, 0.05) 100%);
+}
+
+.est-metric-lbl {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.est-metric-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  margin: 2px 0;
+}
+
+.est-metric-val.highlight-tax {
+  color: var(--warning);
+}
+
+.est-metric-val.highlight-quarterly {
+  color: var(--primary);
+}
+
+.est-metric-sub {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.deadlines-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.deadlines-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.deadlines-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.deadline-card {
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deadline-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dl-quarter-tag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--primary-subtle);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dl-due-date {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.dl-amount {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+.dl-period {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.est-tax-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+}
+
+.notice-icon {
+  color: var(--warning);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.notice-text {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-main);
+}

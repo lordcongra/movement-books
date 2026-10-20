@@ -22,6 +22,7 @@ export interface IncomeState {
 
   // Actions
   addRecords: (newRecords: EmbodiaInvoiceRecord[]) => AddRecordsResult;
+  restoreRecords: (records: EmbodiaInvoiceRecord[]) => void;
   removeRecord: (id: string) => void;
   clearRecords: () => void;
   setSelectedYear: (year: number) => void;
@@ -103,6 +104,17 @@ export const useIncomeStore = create<IncomeState>((set) => ({
     });
 
     return { added: addedCount, duplicates: duplicateCount };
+  },
+
+  restoreRecords: (records) => {
+    const valid = Array.isArray(records) ? [...records] : [];
+    valid.sort((a, b) => {
+      const dateA = a.paidAt || a.invoiceDate;
+      const dateB = b.paidAt || b.invoiceDate;
+      return (dateB || '').localeCompare(dateA || '');
+    });
+    saveRecords(valid);
+    set({ records: valid });
   },
 
   removeRecord: (id) => {
